@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"log"
@@ -38,7 +39,7 @@ import (
 // The SHA-1 algorithm does not use a salt and is less secure than the MD5 algorithm
 func main() {
 	var user string
-	var pw string
+	var pw []byte
 	var pwfile string
 	c := flag.BoolP("c", "c", false, "Create a new file.")
 	n := flag.BoolP("n", "n", false, "Don't update file; display results on stdout.")
@@ -52,7 +53,7 @@ func main() {
 	r := flag.UintP("r", "r", 5000, "Set the number of rounds used for the SHA-256, SHA-512 algorithms\n(higher is more secure but slower, default: 5000).")
 	d := flag.BoolP("d", "d", false, "Force CRYPT encryption of the password (8 chars max, insecure).")
 	s := flag.BoolP("s", "s", false, "Force SHA-1 encryption of the password (insecure).")
-	p := flag.BoolP("p", "p", false, " Do not encrypt the password (plaintext, insecure).")
+	p := flag.BoolP("p", "p", false, "Do not encrypt the password (plaintext, insecure).")
 	D := flag.BoolP("D", "D", false, "Delete the specified user.")
 	v := flag.BoolP("v", "v", false, "Verify password for the specified user.")
 	flag.Parse()
@@ -61,25 +62,34 @@ func main() {
 		if *b {
 			lenArgs(2, args)
 			user = args[0]
-			pw = args[1]
+			pw = []byte(args[1])
 			return
 		}
 		lenArgs(1, args)
 		user = args[0]
-		getPW()
+		pw = getPW()
 		return
 	}
 	if *b {
 		lenArgs(3, args)
 		pwfile = args[0]
 		user = args[1]
-		pw = args[2]
+		pw = []byte(args[2])
 	}
 
 	lenArgs(2, args)
 	fmt.Println(*c, *n, *b, *i, *m, *sha256, *sha512, *B, *C, *r, *d, *s, *p, *D, *v)
 	fmt.Println(pwfile, user, pw)
 	fmt.Println(args)
+}
+
+func readStdin() (pw []byte) {
+	reader := bufio.NewReader(os.Stdin)
+	pw, err := reader.ReadBytes('\n')
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return
 }
 
 func getPW() (pw []byte) {
