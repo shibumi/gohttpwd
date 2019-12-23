@@ -58,7 +58,30 @@ func main() {
 	v := flag.BoolP("v", "v", false, "Verify password for the specified user.")
 	flag.Parse()
 	args := flag.Args()
-	if *n {
+
+	switch {
+	case *v:
+		lenArgs(2, args)
+		pwfile = args[0]
+		user = args[1]
+		switch {
+		case *b:
+			pw = []byte(args[2])
+		case *i:
+			pw = readStdin()
+		default:
+			pw = getPW()
+		}
+		// TODO: verify password for specified user in specified passwordfile
+	case *D:
+		lenArgs(2, args)
+		pwfile = args[0]
+		user = args[1]
+		// TODO: insert delete user function
+	case *n:
+		if *c {
+			usage()
+		}
 		if *b {
 			lenArgs(2, args)
 			user = args[0]
@@ -67,14 +90,19 @@ func main() {
 		}
 		lenArgs(1, args)
 		user = args[0]
+		if *i {
+			pw = readStdin()
+			return
+		}
 		pw = getPW()
 		return
-	}
-	if *b {
+	case *b:
 		lenArgs(3, args)
 		pwfile = args[0]
 		user = args[1]
 		pw = []byte(args[2])
+	case *i:
+		pw = readStdin()
 	}
 
 	lenArgs(2, args)
@@ -118,12 +146,12 @@ func usage() {
 	htpasswd -b[cmBdpsDv] [-C cost] passwordfile username password
 	`
 	fmt.Println(text)
+	flag.PrintDefaults()
+	os.Exit(2)
 }
 
 func lenArgs(l int, args []string) {
 	if len(args) < l {
 		usage()
-		flag.PrintDefaults()
-		os.Exit(2)
 	}
 }
